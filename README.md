@@ -6,9 +6,9 @@
 <div align="center">
   <a href="LICENSE">📄 MIT</a> ·
   <a href="https://docs.rs/gpu-test">📚 Docs</a> ·
-  <a href="https://crates.io/crates/gpu-test">📦 crates.io v0.1.0</a> ·
+  <a href="https://crates.io/crates/gpu-test">📦 crates.io v0.1.2</a> ·
   <a href="https://gitee.com/eternalnight996/gpu-test">🌟 Gitee</a>
-  简体中文
+  简体中文 | [English](README.en.md)
 </div>
 
 面向产线测试工位的显卡检测插件：自动识别显卡是否被系统识别、驱动是否正常加载、`nvidia-smi` 是否稳定，
