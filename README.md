@@ -1,9 +1,8 @@
 <p align="center">
-  <img src="assets/logo.svg" width="110" alt="gpu-test" />
+  <img src="assets/logo.svg" width="280" alt="gpu-test" />
 </p>
 
 <div align="center">
-  <h1>gpu-test</h1>
   <p><strong>GPU 功能性测试插件（Rust）· 兼容所有显卡，先完成 NVIDIA · 一键接入 e-autotest</strong></p>
   <p>
     <a href="LICENSE">📄 MIT</a> |

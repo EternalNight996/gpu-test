@@ -1,9 +1,8 @@
 <p align="center">
-  <img src="assets/logo.svg" width="110" alt="gpu-test" />
+  <img src="assets/logo.svg" width="280" alt="gpu-test" />
 </p>
 
 <div align="center">
-  <h1>gpu-test</h1>
   <p><strong>GPU Functional Test Plugin (Rust) · Works with all GPUs, NVIDIA first · One-click e-autotest integration</strong></p>
   <p>
     <a href="LICENSE">📄 MIT</a> |
