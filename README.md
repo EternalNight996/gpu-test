@@ -73,7 +73,7 @@ R<{"content":"检测到显卡设备 2 个:\n  NVIDIA GeForce RTX 3060 - 状态:O
 
 ## 📷 界面预览
 
-![gpu-test GUI 实际运行界面（Windows 真机 RTX 3060）](assets/screen/gui.png)
+![gpu-test GUI 实际运行界面（Windows 真机 RTX 3060）](https://gitee.com/eternalnight996/gpu-test/raw/master/assets/screen/gui.png)
 
 GUI 模式：检测过程实时展示（硬件枚举 → 驱动检查 → 功能自检 → 稳定性采样），完成后点「确认」或 `--auto` 倒计时自动关闭；无显示器工位用 `--no-gui`。
 
