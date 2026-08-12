@@ -35,8 +35,8 @@ default:
 # 一键安装依赖: zig + cargo-zigbuild（Windows；Linux 用户装 zig 后直接用原生 cargo）
 setup:
     @if (-not (Get-Command winget -ErrorAction SilentlyContinue)) { Write-Host '未找到 winget，请手动安装 zig: https://ziglang.org/download/'; exit 1 }
-    winget install -e --id zig.zig --accept-source-agreements --accept-package-agreements
-    cargo install cargo-zigbuild --locked
+    @if (-not (Get-Command zig -ErrorAction SilentlyContinue)) { winget install -e --id zig.zig --accept-source-agreements --accept-package-agreements } else { Write-Host 'zig 已安装，跳过' }
+    @if (-not (Get-Command cargo-zigbuild -ErrorAction SilentlyContinue)) { cargo install cargo-zigbuild --locked } else { Write-Host 'cargo-zigbuild 已安装，跳过' }
     @Write-Host '依赖安装完成。Windows 另需 VS2022 Build Tools(MSVC v143 x64) + Rust MSVC 工具链；Linux 用户装 zig 后可直接 cargo build/test。'
 
 # 读取当前版本号（Cargo.toml 为唯一来源）
