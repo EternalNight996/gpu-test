@@ -1,12 +1,13 @@
 <div align="center">
-  <h1>gpu-test</h1>
+  <h1>🖥️ gpu-test</h1>
   <p><strong>GPU 功能性测试插件（Rust）· 兼容所有显卡，先完成 NVIDIA，一键接入 e-autotest 测试平台</strong></p>
 </div>
 
 <div align="center">
-  [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-  [![Docs](https://docs.rs/gpu-test/badge.svg)](https://docs.rs/gpu-test)
-  [![Crates.io](https://img.shields.io/crates/v/gpu-test.svg)](https://crates.io/crates/gpu-test)
+  <a href="LICENSE">📄 MIT</a> ·
+  <a href="https://docs.rs/gpu-test">📚 Docs</a> ·
+  <a href="https://crates.io/crates/gpu-test">📦 crates.io v0.1.0</a> ·
+  <a href="https://gitee.com/eternalnight996/gpu-test">🌟 Gitee</a>
   简体中文
 </div>
 
