@@ -1,18 +1,23 @@
-<div align="center">
-  <h1>🖥️ gpu-test</h1>
-  <p><strong>GPU 功能性测试插件（Rust）· 兼容所有显卡，先完成 NVIDIA，一键接入 e-autotest 测试平台</strong></p>
-</div>
+<p align="center">
+  <img src="assets/logo.svg" width="110" alt="gpu-test" />
+</p>
 
 <div align="center">
-  <a href="LICENSE">📄 MIT</a> ·
-  <a href="https://docs.rs/gpu-test">📚 Docs</a> ·
-  <a href="https://crates.io/crates/gpu-test">📦 crates.io v0.1.2</a> ·
-  <a href="https://gitee.com/eternalnight996/gpu-test">🌟 Gitee</a>
-  简体中文 | [English](README.en.md)
+  <h1>gpu-test</h1>
+  <p><strong>GPU 功能性测试插件（Rust）· 兼容所有显卡，先完成 NVIDIA · 一键接入 e-autotest</strong></p>
+  <p>
+    <a href="LICENSE">📄 MIT</a> ·
+    <a href="https://docs.rs/gpu-test">📚 Docs</a> ·
+    <a href="https://crates.io/crates/gpu-test">📦 crates.io v0.1.2</a> ·
+    <a href="https://gitee.com/eternalnight996/gpu-test">🌟 Gitee</a>
+  </p>
+  <p>简体中文 | <a href="README.en.md">English</a></p>
 </div>
 
-面向产线测试工位的显卡检测插件：自动识别显卡是否被系统识别、驱动是否正常加载、`nvidia-smi` 是否稳定，
-对不良显卡（识别异常 / 驱动未装 / 概率性丢失）自动拦截；无独显机型不误杀。
+---
+
+> 面向产线测试工位的显卡检测插件：自动识别显卡是否被系统识别、驱动是否正常加载、`nvidia-smi` 是否稳定，
+> 对不良显卡（识别异常 / 驱动未装 / 概率性丢失）自动拦截；无独显机型不误杀。
 
 ## ✨ Features
 
@@ -22,6 +27,19 @@
 - 🖥️ **双运行模式**：GUI 人工确认 + `--no-gui` 命令行自动化，均支持接入 e-autotest
 - 📊 **e-log 标准日志**：文件 + stdout 双输出，结尾 `R<{json}>R` 平台契约，退出码 0/非 0 判定
 - 🛡️ **不误杀核显机型**：无 NVIDIA 独显时默认 PASS，仅记录，不强制拦截
+
+## 🔄 工作流程
+
+```mermaid
+flowchart LR
+  A["首件 --info 采集基准"] --> B["平台校验筛选同步"]
+  B --> C["量产逐台执行检测"]
+  C --> D{"识别 / 驱动 / 采样全部正常？"}
+  D -- 是 --> E["✅ PASS 放行"]
+  D -- 否 --> F["❌ FAIL 拦截 NG"]
+```
+
+> 型号一致性（首件 vs 量产）由平台按 `--info` 返回标识校验，不一致同样拦截。
 
 ## 🚀 Quick Start
 
@@ -147,5 +165,9 @@ GUI 模式：检测过程实时展示（硬件枚举 → 驱动检查 → 功能
 ## 📄 License
 
 [MIT](LICENSE)
+
+<div align="center">
+  <sub>如果 gpu-test 对你有帮助，欢迎 ⭐ Star 支持，或提交 PR 一起完善～</sub>
+</div>
 
 <div align="center"><sub>Built with ❤️ by HEG Technology</sub></div>

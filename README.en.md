@@ -1,19 +1,24 @@
-<div align="center">
-  <h1>🖥️ gpu-test</h1>
-  <p><strong>GPU Functional Test Plugin (Rust) · Works with all GPUs, NVIDIA first, one-click integration with the e-autotest platform</strong></p>
-</div>
+<p align="center">
+  <img src="assets/logo.svg" width="110" alt="gpu-test" />
+</p>
 
 <div align="center">
-  <a href="LICENSE">📄 MIT</a> ·
-  <a href="https://docs.rs/gpu-test">📚 Docs</a> ·
-  <a href="https://crates.io/crates/gpu-test">📦 crates.io v0.1.2</a> ·
-  <a href="https://gitee.com/eternalnight996/gpu-test">🌟 Gitee</a>
-  [中文](README.md) | English
+  <h1>gpu-test</h1>
+  <p><strong>GPU Functional Test Plugin (Rust) · Works with all GPUs, NVIDIA first · One-click e-autotest integration</strong></p>
+  <p>
+    <a href="LICENSE">📄 MIT</a> ·
+    <a href="https://docs.rs/gpu-test">📚 Docs</a> ·
+    <a href="https://crates.io/crates/gpu-test">📦 crates.io v0.1.2</a> ·
+    <a href="https://gitee.com/eternalnight996/gpu-test">🌟 Gitee</a>
+  </p>
+  <p><a href="README.md">中文</a> | English</p>
 </div>
 
-A production-line GPU check plugin: automatically verifies that the GPU is recognized by the OS, the driver is loaded,
-and `nvidia-smi` is stable. It blocks defective cards (not recognized / driver missing / intermittent loss) at the
-factory, and never false-positive machines without a discrete GPU.
+---
+
+> A production-line GPU check plugin: automatically verifies that the GPU is recognized by the OS, the driver is loaded,
+> and `nvidia-smi` is stable. It blocks defective cards (not recognized / driver missing / intermittent loss) at the
+> factory, and never false-positive machines without a discrete GPU.
 
 ## ✨ Features
 
@@ -23,6 +28,19 @@ factory, and never false-positive machines without a discrete GPU.
 - 🖥️ **Two run modes**: GUI with human confirmation + `--no-gui` CLI automation, both integrate with e-autotest
 - 📊 **e-log standard logging**: file + stdout dual output, `R<{json}>R` platform contract, exit code 0/non-0 verdict
 - 🛡️ **No false positives on iGPU machines**: no NVIDIA dGPU → PASS by default, logged only, never blocked
+
+## 🔄 Workflow
+
+```mermaid
+flowchart LR
+  A["First article: --info baseline"] --> B["Sync to platform filter"]
+  B --> C["Per-unit mass-production test"]
+  C --> D{"Detection / driver / sampling all OK?"}
+  D -- Yes --> E["✅ PASS"]
+  D -- No --> F["❌ FAIL blocked (NG)"]
+```
+
+> Model consistency (first article vs production) is validated by the platform against the `--info` identity; mismatch is blocked too.
 
 ## 🚀 Quick Start
 
@@ -150,5 +168,9 @@ sampling). When done, click "确认" (Confirm) or use `--auto` to auto-close aft
 ## 📄 License
 
 [MIT](LICENSE)
+
+<div align="center">
+  <sub>If gpu-test helps you, give it a ⭐ Star or open a PR to make it better!</sub>
+</div>
 
 <div align="center"><sub>Built with ❤️ by HEG Technology</sub></div>
