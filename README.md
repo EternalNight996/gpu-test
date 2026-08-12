@@ -40,6 +40,10 @@ flowchart LR
 
 > 型号一致性（首件 vs 量产）由平台按 `--info` 返回标识校验，不一致同样拦截。
 
+产线流程演示：
+
+![gpu-test 产线流程演示](https://gitee.com/eternalnight996/gpu-test/raw/master/assets/gif.gif)
+
 ## 🚀 Quick Start
 
 ### 安装 / 构建

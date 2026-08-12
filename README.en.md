@@ -41,6 +41,10 @@ flowchart LR
 
 > Model consistency (first article vs production) is validated by the platform against the `--info` identity; mismatch is blocked too.
 
+Production-line flow demo:
+
+![gpu-test production-line flow demo](https://gitee.com/eternalnight996/gpu-test/raw/master/assets/gif.gif)
+
 ## 🚀 Quick Start
 
 ### Install / Build
