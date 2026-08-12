@@ -1,0 +1,36 @@
+[package]
+name = "gpu-test"
+version = "0.1.0"
+edition = "2024"
+description = "显卡功能性测试插件（兼容所有显卡，先 NVIDIA；e-autotest 接入）"
+license = "MIT"
+keywords = ["gpu", "graphics-card", "testing", "nvidia", "egui"]
+categories = ["command-line-utilities", "development-tools::testing"]
+exclude = ["dist/", "README-客户版.md", "README-用户版.md", "验证报告.md"]
+
+[dependencies]
+eframe = { version = "0.36", default-features = false, features = ["glow", "default_fonts", "x11", "wayland"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+e-log = { version = "0.4.2", default-features = false, features = [
+  "tracing",
+  "tracing-appender",
+  "tracing-subscriber",
+  "tracing-log",
+  "panic",
+] }
+
+[profile.release]
+opt-level = 2
+# 单文件交付，减小体积
+strip = true
+
+# ---- Linux 交叉编译打包（与 e-autotest-egui 同模式）----
+[package.metadata.deb]
+name = "gpu-test"
+maintainer = "HEG Technology"
+copyright = "2026 HEG Technology"
+section = "devel"
+priority = "optional"
+depends = "libc6 (>= 2.27), libgl1, libegl1, libxcursor1, libxi6, libxrandr2, libxinerama1, libxkbcommon0, libxkbcommon-x11-0"
+extended-description = "显卡功能性测试插件,兼容所有显卡(先 NVIDIA),支持 Windows / Kylin V10 / UOS V20 / Ubuntu 18.04+"
