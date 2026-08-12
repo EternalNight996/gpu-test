@@ -4,9 +4,10 @@ version = "0.1.0"
 edition = "2024"
 description = "显卡功能性测试插件（兼容所有显卡，先 NVIDIA；e-autotest 接入）"
 license = "MIT"
+documentation = "https://docs.rs/gpu-test"
 keywords = ["gpu", "graphics-card", "testing", "nvidia", "egui"]
 categories = ["command-line-utilities", "development-tools::testing"]
-exclude = ["dist/", "README-客户版.md", "README-用户版.md", "验证报告.md"]
+exclude = ["dist/", "README-客户版.md", "README-用户版.md", "验证报告.md", ".cargo/config.toml"]
 
 [dependencies]
 eframe = { version = "0.36", default-features = false, features = ["glow", "default_fonts", "x11", "wayland"] }
