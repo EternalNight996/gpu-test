@@ -1,9 +1,11 @@
 [package]
 name = "gpu-test"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 description = "显卡功能性测试插件（兼容所有显卡，先 NVIDIA；e-autotest 接入）"
 license = "MIT"
+repository = "https://gitee.com/eternalnight996/gpu-test.git"
+homepage = "https://gitee.com/eternalnight996/gpu-test"
 documentation = "https://docs.rs/gpu-test"
 keywords = ["gpu", "graphics-card", "testing", "nvidia", "egui"]
 categories = ["command-line-utilities", "development-tools::testing"]
