@@ -71,6 +71,12 @@ gpu-test --no-gui --sn TEST001 --station FCT1 --mode AUTO --samples 3
 R<{"content":"检测到显卡设备 2 个:\n  NVIDIA GeForce RTX 3060 - 状态:OK 驱动:32.0.16.1062\n  OrayIddDriver Device - 状态:OK 驱动:17.50.19.949\n检测到 NVIDIA 显卡 1 个，进入驱动与稳定性检查\n  nvidia-smi: GPU 0: NVIDIA GeForce RTX 3060 (UUID: GPU-94c70323-272d-d7f7-902a-cbf18c996507)\n  功能自检: NVIDIA GeForce RTX 3060, 3 %, 47.57 W, 45, 1777 MHz, 7501 MHz\n  采样 1/3 正常\n  采样 2/3 正常\n  采样 3/3 正常\nPASS: 显卡硬件识别正常，驱动已加载，nvidia-smi 采样 3 次全部正常","opts":{"api":"None","args":[],"command":[],"filter":[],"full":false,"init":false,"task":""},"status":true}>R
 ```
 
+## 📷 界面预览
+
+![gpu-test GUI 实际运行界面（Windows 真机 RTX 3060）](assets/screen/gui.png)
+
+GUI 模式：检测过程实时展示（硬件枚举 → 驱动检查 → 功能自检 → 稳定性采样），完成后点「确认」或 `--auto` 倒计时自动关闭；无显示器工位用 `--no-gui`。
+
 ## 🗂️ 功能与平台支持
 
 | 模块 | Windows 10/11 | Ubuntu 18.04+ | 麒麟 V10 / 统信 UOS V20 | 状态 |
