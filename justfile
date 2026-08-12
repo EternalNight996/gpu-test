@@ -48,6 +48,12 @@ version:
 artifact path:
     @Get-Item {{path}} | Select-Object FullName, Length
 
+# 交叉编译工具检查（build-linux / check 复用）
+[private]
+ensure-tools:
+    @if (-not (Get-Command zig -ErrorAction SilentlyContinue)) { Write-Host '缺少 zig：请先执行 just setup 一键安装'; exit 1 }
+    @if (-not (Get-Command cargo-zigbuild -ErrorAction SilentlyContinue)) { Write-Host '缺少 cargo-zigbuild：请先执行 just setup 一键安装'; exit 1 }
+
 # MSVC 环境前缀：vswhere 定位 VS 后借 cmd 设置 vcvars + MSVC 工具链，再执行传入命令
 # 默认 GNU 工具链 dlltool 有缺陷，必须走 MSVC（build-win / test / check 统一入口）
 [private]
@@ -61,25 +67,25 @@ build-win:
 
 # Linux 交叉编译（zig cc，glibc 2.27 基线，Ubuntu 18.04+ / Kylin V10 / UOS V20）
 build-linux:
-    @if (-not (Get-Command zig -ErrorAction SilentlyContinue)) { Write-Host '缺少 zig：请先执行 just setup 一键安装'; exit 1 }
-    @if (-not (Get-Command cargo-zigbuild -ErrorAction SilentlyContinue)) { Write-Host '缺少 cargo-zigbuild：请先执行 just setup 一键安装'; exit 1 }
+    @just ensure-tools
     cargo zigbuild --{{profile}} --target {{target_linux}}
     @just artifact {{linux_bin}}
 
 # 双目标编译检查（Linux 走 zigbuild）
 check:
-    @just msvc "cargo check"
-    @just msvc "cargo zigbuild --target {{target_linux}}"
+    @{{ if os() == 'windows' { 'just msvc "cargo check"' } else { 'cargo check' } }}
+    @{{ if os() == 'windows' { 'just ensure-tools' } else { 'command -v zig >/dev/null && command -v cargo-zigbuild >/dev/null || { echo "缺少 zig/cargo-zigbuild，请先安装"; exit 1; }' } }}
+    @{{ if os() == 'windows' { 'just msvc "cargo zigbuild --target ' + target_linux + '"' } else { 'cargo zigbuild --target ' + target_linux } }}
 
 # 单元测试（MSVC 工具链）
 test:
-    @just msvc "cargo test"
+    @{{ if os() == 'windows' { 'just msvc "cargo test"' } else { 'cargo test' } }}
 
 # 一键打包：构建 Windows + Linux 后打成 dist/gpu-test-v<版本>.zip，开箱即用
 dist:
     @just build-win
     @just build-linux
-    @$v = (& just version | Select-Object -Last 1).Trim(); $d = "{{dist_dir}}/gpu-test-v$v"; if (Test-Path $d) { Remove-Item -Recurse -Force $d }; New-Item -ItemType Directory -Force -Path "$d/windows", "$d/linux" | Out-Null; Copy-Item {{win_exe}} "$d/windows/"; Copy-Item {{linux_bin}} "$d/linux/"; Copy-Item {{docs}} "$d/"; $zip = "{{dist_dir}}/gpu-test-v$v.zip"; if (Test-Path $zip) { Remove-Item -Force $zip }; Compress-Archive -Path $d -DestinationPath $zip; Write-Host ("打包完成: " + (Resolve-Path $zip).Path)
+    @$v = (& just version | Select-Object -Last 1).Trim(); $d = "{{dist_dir}}/gpu-test-v$v"; if (Test-Path $d) { Remove-Item -Recurse -Force $d }; New-Item -ItemType Directory -Force -Path "$d/windows", "$d/linux" | Out-Null; Copy-Item {{win_exe}} "$d/windows/"; Copy-Item {{linux_bin}} "$d/linux/"; Copy-Item {{docs}} "$d/"; $zip = "{{dist_dir}}/gpu-test-v$v.zip"; if (Test-Path $zip) { Remove-Item -Force $zip }; Compress-Archive -Path $d -DestinationPath $zip; Write-Host ("打包完成: " + (Resolve-Path $zip).Path); Add-Type -AssemblyName System.IO.Compression.FileSystem; $z = [System.IO.Compression.ZipFile]::OpenRead($zip); try { $z.Entries | ForEach-Object { Write-Host ('  ' + $_.FullName) } } finally { $z.Dispose() }
 
 # 清空构建产物（含打包目录）
 clean:
