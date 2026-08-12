@@ -6,9 +6,9 @@
   <h1>gpu-test</h1>
   <p><strong>GPU Functional Test Plugin (Rust) · Works with all GPUs, NVIDIA first · One-click e-autotest integration</strong></p>
   <p>
-    <a href="LICENSE">📄 MIT</a> ·
-    <a href="https://docs.rs/gpu-test">📚 Docs</a> ·
-    <a href="https://crates.io/crates/gpu-test">📦 crates.io v0.1.2</a> ·
+    <a href="LICENSE">📄 MIT</a> |
+    <a href="https://docs.rs/gpu-test">📚 Docs</a> |
+    <a href="https://crates.io/crates/gpu-test">📦 crates.io v0.1.2</a> |
     <a href="https://gitee.com/eternalnight996/gpu-test">🌟 Gitee</a>
   </p>
   <p><a href="README.md">中文</a> | English</p>

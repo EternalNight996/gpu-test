@@ -6,9 +6,9 @@
   <h1>gpu-test</h1>
   <p><strong>GPU 功能性测试插件（Rust）· 兼容所有显卡，先完成 NVIDIA · 一键接入 e-autotest</strong></p>
   <p>
-    <a href="LICENSE">📄 MIT</a> ·
-    <a href="https://docs.rs/gpu-test">📚 Docs</a> ·
-    <a href="https://crates.io/crates/gpu-test">📦 crates.io v0.1.2</a> ·
+    <a href="LICENSE">📄 MIT</a> |
+    <a href="https://docs.rs/gpu-test">📚 Docs</a> |
+    <a href="https://crates.io/crates/gpu-test">📦 crates.io v0.1.2</a> |
     <a href="https://gitee.com/eternalnight996/gpu-test">🌟 Gitee</a>
   </p>
   <p>简体中文 | <a href="README.en.md">English</a></p>
