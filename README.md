@@ -157,6 +157,7 @@ GUI 模式：检测过程实时展示（硬件枚举 → 驱动检查 → 功能
 ## 🛠 Development / Contributing
 
 - 构建统一走 `justfile`（Windows 需 VS/MSVC 工具链；Linux 交叉编译需 cargo-zigbuild + zig，glibc 2.27 基线）
+- 一键打包：`just setup` 装好依赖 → `just dist` 生成 `dist/gpu-test-v<版本>.zip`（含 Windows/Linux 双平台二进制 + README + LICENSE，开箱即用）
 - 架构：`src/detect.rs` 检测核心（Windows WMI / Linux lspci 枚举 + nvidia-smi 功能检测）、`src/gui.rs` egui 界面、`src/logger.rs` e-log 日志、`src/main.rs` CLI/GUI 入口
 - 提交 PR 前：代码符合规范、核心逻辑有单元测试、文档与代码同步更新
 - 欢迎贡献：修复、新增显卡厂商支持（AMD / Intel 深度检测）、新增检测项

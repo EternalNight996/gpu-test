@@ -160,6 +160,7 @@ sampling). When done, click "确认" (Confirm) or use `--auto` to auto-close aft
 ## 🛠 Development / Contributing
 
 - Build via `justfile` (Windows needs VS/MSVC toolchain; Linux cross-compile needs cargo-zigbuild + zig, glibc 2.27 baseline)
+- One-click packaging: `just setup` to install dependencies, then `just dist` produces `dist/gpu-test-v<version>.zip` (Windows + Linux binaries, README, LICENSE — ready to deploy)
 - Architecture: `src/detect.rs` detection core (Windows WMI / Linux lspci enumeration + nvidia-smi functional checks), `src/gui.rs` egui UI, `src/logger.rs` e-log logging, `src/main.rs` CLI/GUI entry
 - Before a PR: code follows conventions, core logic has unit tests, docs stay in sync
 - Contributions welcome: fixes, new vendor support (AMD / Intel deep check), new check items
