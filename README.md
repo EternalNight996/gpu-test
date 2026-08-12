@@ -89,6 +89,45 @@ GUI 模式：检测过程实时展示（硬件枚举 → 驱动检查 → 功能
 | AMD / Intel 独显深度检测 | 🚧 规划中 | 🚧 规划中 | 🚧 规划中 | 枚举兼容，深度检测待扩展 |
 | ARM64 架构 | — | 🚧 规划中 | 🚧 规划中 | 客户机为飞腾 / 鲲鹏时构建 |
 
+## ⚙️ 命令行参数
+
+| 参数 | 说明 | 默认 |
+|---|---|---|
+| `--sn` | 序列号（平台自动传入，手动可省略，仅写日志） | 空 |
+| `--station` | 工站（平台自动传入，手动可省略，仅写日志） | 空 |
+| `--mode` | 模式（平台自动传入，手动可省略，仅写日志） | 空 |
+| `--samples` | nvidia-smi 稳定性采样次数，越多拦截越严、耗时越长 | 3 |
+| `--info` | 只输出一键同步标识（型号 / 驱动 / 显存 / VBIOS），供平台 filter 比对 | 关 |
+| `--no-gui` | 不弹窗，命令行直接输出（自动化 / 调试） | 关 |
+| `--auto` | GUI 检测完成后倒计时自动关闭 | 关 |
+| `--close SECS` | 自动关闭倒计时秒数 | 5 |
+| `--res PATH` | 额外把 `R<json>R` 写入文件（平台 res_url 方式） | 空 |
+
+## 🔌 接入 e-autotest
+
+1. **放置插件**：把 `gpu-test`（Linux）/ `gpu-test.exe`（Windows）放入 `plugins/gpu-test/`，Linux 记得 `chmod +x`
+2. **注册 APP**（extend_app 配置）：建议注册两个独立 APP，职责分离、互不干扰
+
+   | tag | args | 用途 |
+   |---|---|---|
+   | `GPU_TEST` | `--sn --station --mode --samples 3 --no-gui` | 功能检测（自动化跑批） |
+   | `GPU_TEST_INFO` | `--info` | 型号标识（首件 / 量产比对） |
+
+   fileinfo 要点：`exe_type=WindowsExe/LinuxExe`、`architecture=X86_64`、`is_check=true`（解析 `R<...>R`）、`timeout=30s`
+3. **流程挂载**：把 APP 挂到显卡检测工站，`on_fail` 设为拦截（重测 / 上报 MES NG）
+4. **首件一键同步**：首件跑 `gpu-test --info`，把返回标识填入平台“校验筛选”（如 `*10de:2487*` 或型号名），量产每台自动比对，不一致即 NG 拦截
+5. **验证**：
+
+   ```bash
+   gpu-test --no-gui --sn TEST001 --station FCT1 --mode AUTO
+   echo $?    # 0 = 通过，非 0 = FAIL
+   ```
+
+### 输出契约（e-autotest 插件标准）
+
+- 单行 `R<{json}>R`，JSON 为 `{"content": "...", "status": true|false, "opts": {...}}`；`status` 与退出码一致（0=PASS，非 0=FAIL）
+- stdout 同步输出 e-log 详细日志（同样式写入 `logs/gpu-test.log`），末尾收尾 `R<...>R`；UTF-8 编码并强制 flush，平台取最后一个 `R<...>R` 解析
+
 ## 💡 Why Choose
 
 - **痛点**：单客户一年反馈 17 块不良显卡（开箱 + 终端），不良 DPPM 高企，靠人工目检漏检严重 → **自动拦截**，每台量产机跑一遍功能测试，异常即 NG
