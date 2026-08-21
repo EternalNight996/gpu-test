@@ -116,14 +116,12 @@ impl App {
                 Msg::Done(status, content) => self.finish(status, content),
             }
         }
-        // 倒计时：按真实时间递减（每秒）
+        // 倒计时：按实际流逝秒数扣减（慢渲染机器上若按帧递减会被放大数倍）
         if let Some(n) = self.countdown.as_mut() {
-            let elapsed = now.duration_since(self.last_tick);
-            if elapsed >= Duration::from_secs(1) {
+            let secs = now.duration_since(self.last_tick).as_secs() as u32;
+            if secs > 0 {
                 self.last_tick = now;
-                if *n > 0 {
-                    *n -= 1;
-                }
+                *n = n.saturating_sub(secs);
             }
         }
     }
@@ -144,10 +142,8 @@ impl eframe::App for App {
             ctx.send_viewport_cmd(egui::ViewportCommand::Close);
             return;
         }
-        // 倒计时未结束则持续刷新
-        if self.countdown.is_some() {
-            ctx.request_repaint_after(Duration::from_millis(200));
-        }
+        // 检测中/倒计时期间持续请求重绘（慢渲染、无输入事件时也保证推进）
+        ctx.request_repaint_after(Duration::from_millis(200));
 
         // 内容区可滚动：小分辨率/小窗口下不裁切
         egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
@@ -202,7 +198,7 @@ impl eframe::App for App {
         ui.vertical_centered(|ui| {
             let (text, color) = match self.result {
                 None => ("检测中...".to_string(), Color32::GRAY),
-                Some(true) => ("PASS".to_string(), Color32::from_rgb(0x2E, 0x9B, 0xE8)),
+                Some(true) => ("PASS".to_string(), Color32::from_rgb(0x34, 0xC7, 0x59)), // 绿色
                 Some(false) => ("FAIL".to_string(), Color32::from_rgb(0xD9, 0x30, 0x40)),
             };
             ui.label(RichText::new(text).size(30.0).strong().color(color));
