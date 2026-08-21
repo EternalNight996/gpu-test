@@ -24,7 +24,7 @@
 - 🔁 **首件基准一键同步**：`--info` 输出型号 / 驱动 / 显存 / VBIOS，量产逐台比对，型号不一致即拦截
 - 🌐 **全平台兼容**：Windows 10/11 + Ubuntu 18.04+/银河麒麟 V10/统信 UOS V20（x86_64）
 - 🖥️ **双运行模式**：GUI 人工确认 + `--no-gui` 命令行自动化，均支持接入 e-autotest
-- 📊 **e-log 标准日志**：文件 + stdout 双输出，结尾 `R<{json}>R` 平台契约，退出码 0/非 0 判定
+- 📊 **e-log 标准日志**：文件 + stdout 双输出，采集明细（枚举 / 自检 / 采样）逐项落盘 `logs/gpu-test.log`，结尾 `R<{json}>R` 平台契约，退出码 0/非 0 判定
 - 🛡️ **不误杀核显机型**：无 NVIDIA 独显时默认 PASS，仅记录，不强制拦截
 
 ## 🔄 工作流程
@@ -124,6 +124,9 @@ GUI 模式：检测过程实时展示（硬件枚举 → 驱动检查 → 功能
 | `--auto` | GUI 检测完成后倒计时自动关闭 | 关 |
 | `--close SECS` | 自动关闭倒计时秒数 | 5 |
 | `--res PATH` | 额外把 `R<json>R` 写入文件（平台 res_url 方式） | 空 |
+| `--init-config` | 输出一份 `gpu-test.toml`（默认配置，编辑后同目录生效） | 关 |
+
+> 💡 **配置文件 `gpu-test.toml`**：与程序同目录放置即可自动读取，键名与上表命令行参数一一对应（`sn` / `station` / `mode` / `samples` / `info` / `auto` / `close` / `res` / `no_gui`），提供默认值；**若不存在会自动生成一份默认配置**，命令行参数优先，覆盖配置文件中的同名项。用 `gpu-test --init-config` 可随时重新生成。
 
 ## 🔌 接入 e-autotest
 
@@ -165,6 +168,17 @@ GUI 模式：检测过程实时展示（硬件枚举 → 驱动检查 → 功能
 - 架构：`src/detect.rs` 检测核心（Windows WMI / Linux lspci 枚举 + nvidia-smi 功能检测）、`src/gui.rs` egui 界面、`src/logger.rs` e-log 日志、`src/main.rs` CLI/GUI 入口
 - 提交 PR 前：代码符合规范、核心逻辑有单元测试、文档与代码同步更新
 - 欢迎贡献：修复、新增显卡厂商支持（AMD / Intel 深度检测）、新增检测项
+
+## 📝 更新记录
+
+### v0.1.3（最新）
+- 🆕 **配置文件 `gpu-test.toml`**：键与 CLI 参数一一对应（`sn` / `station` / `mode` / `samples` / `info` / `auto` / `close` / `res` / `no_gui`），同目录放置自动读取，命令行参数优先
+- 配置不存在时自动生成一份默认配置文件；`gpu-test --init-config` 可随时重新生成
+- 采集明细完整落盘 `logs/gpu-test.log`（硬件枚举 / nvidia-smi / 功能自检 / 稳定性采样逐项记录）
+- `just dist` 打包自动包含 `gpu-test.toml`，开箱即用
+
+### v0.1.2
+- 补充 crates.io 仓库 / 主页元数据，发布到 crates.io
 
 ## 📄 License
 

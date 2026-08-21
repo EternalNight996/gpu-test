@@ -17,7 +17,7 @@ profile      := "release"                        # 构建配置 release / debug
 target_linux := "x86_64-unknown-linux-gnu.2.27"  # zigbuild 自定义目标（glibc 2.27 基线）
 target_short := "x86_64-unknown-linux-gnu"       # 产物目录名（zigbuild 自动去掉 .2.27 后缀）
 dist_dir     := "dist"                           # 打包输出目录
-docs         := "README.md, README.en.md, LICENSE"  # 打进发布包的文件清单
+docs         := "README.md, README.en.md, LICENSE, gpu-test.toml"  # 打进发布包的文件清单
 win_exe      := "target/" + profile + "/" + bin + ".exe"
 linux_bin    := "target/" + target_short + "/" + profile + "/" + bin
 

@@ -10,12 +10,16 @@
 //! - --no-gui：不弹窗，命令行直接输出 R<json>R（调试/CI 用）
 //! - --res PATH：额外把 R<json>R 写入文件（对应平台 res_url）
 //!
+//! 配置：与程序同目录放置 gpu-test.toml 可提供默认值（不存在时自动生成一份默认配置，
+//! `--init-config` 可随时重新生成），命令行参数优先，覆盖配置文件中的同名项。
+//!
 //! 输出：stdout 打印一行 R<{json}>R，退出码 0=通过 / 非0=失败。
 
 // 与 heg-os-active2 同款：release 为 GUI 子系统（双击不弹命令行），
 // 启动时 reattach_windows_terminal() 挂父控制台，cmd 下也能看到 stdout 日志。
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod config;
 mod detect;
 mod gui;
 mod logger;
@@ -23,8 +27,6 @@ mod logger;
 use e_log::preload::*;
 use std::io::Write;
 use std::process::exit;
-
-const DEFAULT_CLOSE_SECS: u32 = 5;
 
 #[derive(Default, Clone)]
 struct Args {
@@ -37,10 +39,28 @@ struct Args {
     close: u32,
     res: String,
     no_gui: bool,
+    init_config: bool,
 }
 
-fn parse_args(argv: &[String]) -> Result<Args, String> {
-    let mut a = Args { samples: detect::DEFAULT_SAMPLES, close: DEFAULT_CLOSE_SECS, ..Default::default() };
+/// 配置文件（项目名.toml）提供默认值，命令行参数在此基础上覆盖
+impl From<config::Config> for Args {
+    fn from(c: config::Config) -> Self {
+        Args {
+            sn: c.sn,
+            station: c.station,
+            mode: c.mode,
+            samples: c.samples,
+            info: c.info,
+            auto: c.auto,
+            close: c.close,
+            res: c.res,
+            no_gui: c.no_gui,
+            init_config: false,
+        }
+    }
+}
+
+fn parse_args(argv: &[String], a: &mut Args) -> Result<(), String> {
     let mut i = 0;
     let take = |i: &mut usize, name: &str| -> Result<String, String> {
         *i += 1;
@@ -64,6 +84,7 @@ fn parse_args(argv: &[String]) -> Result<Args, String> {
             "--info" => a.info = true,
             "--auto" => a.auto = true,
             "--no-gui" => a.no_gui = true,
+            "--init-config" => a.init_config = true,
             "--help" | "-h" => {
                 print_help();
                 exit(0);
@@ -72,7 +93,7 @@ fn parse_args(argv: &[String]) -> Result<Args, String> {
         }
         i += 1;
     }
-    Ok(a)
+    Ok(())
 }
 
 fn print_help() {
@@ -88,7 +109,10 @@ fn print_help() {
   --close SECS   自动关闭倒计时秒数（默认 5）
   --res PATH     额外把 R<json>R 写入文件（对应平台 res_url）
   --no-gui       不弹窗，命令行直接输出（调试/CI）
-  --help         显示本帮助"
+  --init-config  重新输出一份 gpu-test.toml（默认配置，编辑后同目录生效）
+  --help         显示本帮助
+
+配置: 与程序同目录放置 gpu-test.toml 可提供默认值（不存在时自动生成一份），命令行参数优先。"
     );
 }
 
@@ -126,16 +150,34 @@ fn emit(content: &str, status: bool, res: &str) {
 fn main() -> std::process::ExitCode {
     let _guards = logger::init();
     let argv: Vec<String> = std::env::args().skip(1).collect();
-    let args = match parse_args(&argv) {
-        Ok(a) => a,
-        Err(e) => {
-            // 参数错误也要有 R 输出（平台扫描 R 标签）
-            e_log::error!(target: "gpu-test", "参数解析失败 - {e}");
-            drop(_guards); // 冲刷日志，保证 stdout 先出日志行、R 行收尾
-            emit(&format!("FAIL: 参数解析失败 - {e}"), false, "");
-            return std::process::ExitCode::FAILURE;
-        }
-    };
+
+    // 先读配置文件（项目名.toml，如 gpu-test.toml）提供默认值，命令行参数再覆盖
+    let mut args = Args::from(config::Config::load());
+    if let Err(e) = parse_args(&argv, &mut args) {
+        // 参数错误也要有 R 输出（平台扫描 R 标签）
+        e_log::error!(target: "gpu-test", "参数解析失败 - {e}");
+        drop(_guards); // 冲刷日志，保证 stdout 先出日志行、R 行收尾
+        emit(&format!("FAIL: 参数解析失败 - {e}"), false, "");
+        return std::process::ExitCode::FAILURE;
+    }
+
+    // --init-config：输出一份 项目名.toml 默认配置后退出
+    if args.init_config {
+        return match config::write_default() {
+            Ok(path) => {
+                info!(target: "gpu-test", "已输出配置文件: {}", path.display());
+                drop(_guards);
+                println!("已输出配置文件: {}", path.display());
+                std::process::ExitCode::SUCCESS
+            }
+            Err(e) => {
+                e_log::error!(target: "gpu-test", "输出配置文件失败 - {e}");
+                drop(_guards);
+                emit(&format!("FAIL: 输出配置文件失败 - {e}"), false, "");
+                std::process::ExitCode::FAILURE
+            }
+        };
+    }
     info!(
         target: "gpu-test",
         "运行开始: sn={} station={} mode={} samples={}",

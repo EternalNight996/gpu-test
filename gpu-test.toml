@@ -1,0 +1,22 @@
+# gpu-test 配置文件（与命令行参数一一对应）
+# 与程序同目录（当前工作目录）放置后自动读取；命令行参数优先，覆盖同名项。
+# 可用 `gpu-test --init-config` 重新生成本文件。
+
+# 序列号（--sn，平台标准参数）
+sn = ""
+# 工站（--station，平台标准参数）
+station = ""
+# 模式（--mode，平台标准参数）
+mode = ""
+# nvidia-smi 稳定性采样次数（--samples，默认 3）
+samples = 3
+# 只输出显卡型号标识，供平台 filter 比对（--info）
+info = false
+# 检测完倒计时自动关闭（--auto）
+auto = false
+# 自动关闭倒计时秒数（--close，默认 5）
+close = 5
+# 额外把 R<json>R 写入文件（--res PATH）
+res = ""
+# 不弹窗，命令行直接输出（--no-gui）
+no_gui = false
