@@ -9,6 +9,7 @@
 //! - --auto：检测完倒计时自动关闭（--close 控制秒数，默认 5）
 //! - --no-gui：不弹窗，命令行直接输出 R<json>R（调试/CI 用）
 //! - --res PATH：额外把 R<json>R 写入文件（对应平台 res_url）
+//! - --info：纯文本输出型号标识（不输出日志），供平台 filter 比对首件与量产
 //!
 //! 配置：与程序同目录放置 gpu-test.toml 可提供默认值（不存在时自动生成一份默认配置，
 //! `--init-config` 可随时重新生成），命令行参数优先，覆盖配置文件中的同名项。
@@ -104,7 +105,7 @@ fn print_help() {
   --station ST   工站（平台标准参数）
   --mode MODE    模式（平台标准参数）
   --samples N    nvidia-smi 稳定性采样次数（默认 3）
-  --info         只输出显卡型号标识（GPU: 型号 [10de:xxxx]），供平台 filter 比对首件与量产
+  --info         只输出显卡型号标识（GPU: 型号 [10de:xxxx]），纯文本 R<...>R 发送、不输出日志，供平台 filter 比对
   --auto         检测完倒计时自动关闭（默认需人工确认）
   --close SECS   自动关闭倒计时秒数（默认 5）
   --res PATH     额外把 R<json>R 写入文件（对应平台 res_url）
@@ -148,6 +149,8 @@ fn emit(content: &str, status: bool, res: &str) {
 }
 
 fn main() -> std::process::ExitCode {
+    // 日志初始化（文件 + stdout）：reattach 挂接父控制台，保证 release GUI 子系统下 stdout 可见；
+    // --info / --init-config 等纯文本分支不打印日志行，stdout 只有 R<...>R / 提示文本
     let _guards = logger::init();
     let argv: Vec<String> = std::env::args().skip(1).collect();
 
@@ -178,19 +181,10 @@ fn main() -> std::process::ExitCode {
             }
         };
     }
-    info!(
-        target: "gpu-test",
-        "运行开始: sn={} station={} mode={} samples={}",
-        args.sn,
-        args.station,
-        args.mode,
-        args.samples,
-    );
 
-    // 型号标识接口：只返回显卡型号，不做驱动/稳定性检测，供平台比对
+    // --info：纯文本输出型号标识（不打印日志行），供平台 filter 比对首件与量产
     if args.info {
         let (status, content) = detect::gpu_identities();
-        info!(target: "gpu-test", "型号标识:\n{content}");
         drop(_guards);
         emit(&content, status, &args.res);
         return if status {
@@ -199,6 +193,15 @@ fn main() -> std::process::ExitCode {
             std::process::ExitCode::FAILURE
         };
     }
+
+    info!(
+        target: "gpu-test",
+        "运行开始: sn={} station={} mode={} samples={}",
+        args.sn,
+        args.station,
+        args.mode,
+        args.samples,
+    );
 
     let (status, content) = if !args.no_gui {
         // GUI 弹窗模式

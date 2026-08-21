@@ -235,7 +235,7 @@ fn lspci_identity(line: &str) -> (String, Option<String>) {
 }
 
 /// 型号标识（供平台 filter 比对首件与量产是否一致）。
-/// 返回 (status, content)，content 每行 `GPU N: <型号> [<vendor:device>]`。
+/// 纯文本输出、不写日志；返回 (status, content)，content 每行 `GPU N: <型号> [<vendor:device>]`。
 pub fn gpu_identities() -> (bool, String) {
     let (code, gpus) = enum_gpus();
     if code != 0 {
@@ -288,7 +288,6 @@ pub fn gpu_identities() -> (bool, String) {
                     }
                 }
             }
-            info!(target: "gpu-test", "型号标识: {line}");
             line
         })
         .collect();
