@@ -1,7 +1,8 @@
 //! e-log 日志初始化（与 e-autotest/etest 生态同一套框架）。
 //!
-//! 同时输出到文件 logs/gpu-test.log（非阻塞，追加不滚动）与 stdout（e-log 格式），
-//! 便于终端查看与后续按日志格式筛选；R<...>R 结果行仍由主程序单独输出供平台解析。
+//! 同时输出到文件 logs/gpu-test-gui.log（非阻塞，追加不滚动）与 stdout（e-log 格式），
+//! 便于终端查看与后续按日志格式筛选；R<...>R 结果行仍由主程序单独输出供平台解析
+//! （--res 覆盖写 logs/gpu-test.log，见 main::emit）。
 
 use e_log::appender::{non_blocking::WorkerGuard, rolling};
 use e_log::subscriber::{fmt, layer::SubscriberExt, Registry};
@@ -13,7 +14,7 @@ pub fn init() -> Vec<WorkerGuard> {
     e_log::panic::reattach_windows_terminal();
     let folder = std::path::Path::new("logs");
     let _ = std::fs::create_dir_all(folder);
-    let roll = rolling::never(folder, "gpu-test.log", FileShare::Read);
+    let roll = rolling::never(folder, "gpu-test-gui.log", FileShare::Read);
     let (file_writer, file_guard) = e_log::appender::non_blocking(roll);
     let file_layer = fmt::layer().with_ansi(false).with_writer(file_writer);
     let (stdout_writer, stdout_guard) = e_log::appender::non_blocking(std::io::stdout());

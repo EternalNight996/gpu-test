@@ -7,7 +7,8 @@
   <p>
     <a href="LICENSE">📄 MIT</a> |
     <a href="https://docs.rs/gpu-test">📚 Docs</a> |
-    <a href="https://crates.io/crates/gpu-test">📦 crates.io v0.1.2</a> |
+    <a href="https://crates.io/crates/gpu-test">📦 crates.io v0.1.4</a> |
+    <a href="https://github.com/EternalNight996/gpu-test">🐙 GitHub</a> |
     <a href="https://gitee.com/eternalnight996/gpu-test">🌟 Gitee</a>
   </p>
   <p><a href="README.md">中文</a> | English</p>
@@ -22,10 +23,11 @@
 ## ✨ Features
 
 - 🚫 **Automatic bad-card blocking**: enumerate → driver → functional self-check (utilization / power / temperature / clocks) → stability sampling; FAIL on any anomaly
+- 🎯 **Limit-match GPU**: `[rule] gpu` whitelist (model name / PCI ID) blocks on mismatch; a missing GPU is also blocked
 - 🔁 **One-click first-article sync**: `--info` outputs model / driver / VRAM / VBIOS; mass production compares every unit, mismatch is blocked
 - 🌐 **Cross-platform**: Windows 10/11 + Ubuntu 18.04+/Kylin V10/UOS V20 (x86_64)
 - 🖥️ **Two run modes**: GUI with human confirmation + `--no-gui` CLI automation, both integrate with e-autotest
-- 📊 **e-log standard logging**: file + stdout dual output, `R<{json}>R` platform contract, exit code 0/non-0 verdict
+- 📊 **e-log standard logging**: session detail to `logs/gpu-test-gui.log`, `--res` result overwrites `logs/gpu-test.log`, `R<{json}>R` platform contract, exit code 0/non-0 verdict
 - 🛡️ **No false positives on iGPU machines**: no NVIDIA dGPU → PASS by default, logged only, never blocked
 
 ## 🔄 Workflow
@@ -68,7 +70,7 @@ gpu-test --info
 Real output (RTX 3060):
 
 ```
-2026-08-12T04:46:42.594026Z  INFO gpu-test: 运行开始: sn= station= mode= samples=3
+2026-08-12T04:46:42.594026Z  INFO gpu-test: 运行开始: samples=3 限定匹配=不限
 2026-08-12T04:46:42.944743Z  INFO gpu-test: 型号标识: GPU 0: NVIDIA GeForce RTX 3060 [10de:2487] 驱动:610.62 显存:12288 MiB VBIOS:94.04.71.00.c2 WMI驱动:32.0.16.1062
 2026-08-12T04:46:42.944766Z  INFO gpu-test: 型号标识: GPU 1: OrayIddDriver Device 驱动:17.50.19.949
 R<{"content":"GPU 0: NVIDIA GeForce RTX 3060 [10de:2487] 驱动:610.62 显存:12288 MiB VBIOS:94.04.71.00.c2 WMI驱动:32.0.16.1062\nGPU 1: OrayIddDriver Device 驱动:17.50.19.949","opts":{"api":"None","args":[],"command":[],"filter":[],"full":false,"init":false,"task":""},"status":true}>R
@@ -77,20 +79,20 @@ R<{"content":"GPU 0: NVIDIA GeForce RTX 3060 [10de:2487] 驱动:610.62 显存:12
 ### Example 2: Automated functional test
 
 ```bash
-gpu-test --no-gui --sn TEST001 --station FCT1 --mode AUTO --samples 3
+gpu-test --no-gui --samples 3
 ```
 
 Real output (logs are in Chinese):
 
 ```
-2026-08-12T04:47:00.339075Z  INFO gpu-test: 运行开始: sn=TEST001 station=FCT1 mode=AUTO samples=3
+2026-08-12T04:47:00.339075Z  INFO gpu-test: 运行开始: samples=3 限定匹配=不限
 2026-08-12T04:47:00.612700Z  INFO gpu-test: 硬件枚举:   NVIDIA GeForce RTX 3060 - 状态:OK 驱动:32.0.16.1062
 2026-08-12T04:47:00.660348Z  INFO gpu-test: 显卡功能:   nvidia-smi: GPU 0: NVIDIA GeForce RTX 3060 (UUID: GPU-94c70323-272d-d7f7-902a-cbf18c996507)
 2026-08-12T04:47:00.723550Z  INFO gpu-test: 功能自检: NVIDIA GeForce RTX 3060, 3 %, 47.57 W, 45, 1777 MHz, 7501 MHz
 2026-08-12T04:47:00.770132Z  INFO gpu-test: 稳定性采样:   采样 1/3 正常
 2026-08-12T04:47:01.328519Z  INFO gpu-test: 稳定性采样:   采样 2/3 正常
 2026-08-12T04:47:01.887764Z  INFO gpu-test: 稳定性采样:   采样 3/3 正常
-2026-08-12T04:47:01.887793Z  INFO gpu-test: status=PASS sn=TEST001 station=FCT1 mode=AUTO samples=3
+2026-08-12T04:47:01.887793Z  INFO gpu-test: status=PASS samples=3 限定匹配=不限
 R<{"content":"检测到显卡设备 2 个:\n  NVIDIA GeForce RTX 3060 - 状态:OK 驱动:32.0.16.1062\n  OrayIddDriver Device - 状态:OK 驱动:17.50.19.949\n检测到 NVIDIA 显卡 1 个，进入驱动与稳定性检查\n  nvidia-smi: GPU 0: NVIDIA GeForce RTX 3060 (UUID: GPU-94c70323-272d-d7f7-902a-cbf18c996507)\n  功能自检: NVIDIA GeForce RTX 3060, 3 %, 47.57 W, 45, 1777 MHz, 7501 MHz\n  采样 1/3 正常\n  采样 2/3 正常\n  采样 3/3 正常\nPASS: 显卡硬件识别正常，驱动已加载，nvidia-smi 采样 3 次全部正常","opts":{"api":"None","args":[],"command":[],"filter":[],"full":false,"init":false,"task":""},"status":true}>R
 ```
 
@@ -117,15 +119,12 @@ sampling). When done, click "确认" (Confirm) or use `--auto` to auto-close aft
 
 | Option | Description | Default |
 |---|---|---|
-| `--sn` | Serial number (passed in by the platform; optional manually; log only) | empty |
-| `--station` | Station name (passed in by the platform; optional manually; log only) | empty |
-| `--mode` | Mode (passed in by the platform; optional manually; log only) | empty |
 | `--samples` | Number of nvidia-smi stability samples; more = stricter but slower | 3 |
 | `--info` | Output only the one-click sync identity (model / driver / VRAM / VBIOS) for platform filter | off |
 | `--no-gui` | No window; print directly to stdout (automation / debug) | off |
 | `--auto` | Auto-close GUI after countdown when detection finishes | off |
 | `--close SECS` | Auto-close countdown seconds | 5 |
-| `--res PATH` | Additionally write the `R<json>R` result to a file (platform res_url) | empty |
+| `--res` | Overwrite the `R<json>R` result to `logs/gpu-test.log` (etch style, keep only latest) | off |
 
 ## 🔌 e-autotest Integration
 
@@ -134,7 +133,7 @@ sampling). When done, click "确认" (Confirm) or use `--auto` to auto-close aft
 
    | tag | args | Purpose |
    |---|---|---|
-   | `GPU_TEST` | `--sn --station --mode --samples 3 --no-gui` | Functional test (automation) |
+   | `GPU_TEST` | `--samples 3 --no-gui` | Functional test (automation) |
    | `GPU_TEST_INFO` | `--info` | Model identity (first article / production compare) |
 
    fileinfo essentials: `exe_type=WindowsExe/LinuxExe`, `architecture=X86_64`, `is_check=true` (parse `R<...>R`), `timeout=30s`
@@ -144,14 +143,14 @@ sampling). When done, click "确认" (Confirm) or use `--auto` to auto-close aft
 5. **Verify**:
 
    ```bash
-   gpu-test --no-gui --sn TEST001 --station FCT1 --mode AUTO
+   gpu-test --no-gui
    echo $?    # 0 = PASS, non-zero = FAIL
    ```
 
 ### Output contract (e-autotest plugin standard)
 
 - One line `R<{json}>R`; JSON is `{"content": "...", "status": true|false, "opts": {...}}`; `status` matches the exit code (0=PASS, non-0=FAIL)
-- stdout also carries detailed e-log output (same format written to `logs/gpu-test.log`), ending with `R<...>R`; UTF-8 with forced flush; the platform parses the last `R<...>R`
+- stdout also carries detailed e-log output (same format written to `logs/gpu-test-gui.log`), ending with `R<...>R`; UTF-8 with forced flush; the platform parses the last `R<...>R`
 
 ## 💡 Why Choose
 

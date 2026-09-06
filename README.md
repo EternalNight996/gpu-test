@@ -7,7 +7,8 @@
   <p>
     <a href="LICENSE">📄 MIT</a> |
     <a href="https://docs.rs/gpu-test">📚 Docs</a> |
-    <a href="https://crates.io/crates/gpu-test">📦 crates.io v0.1.2</a> |
+    <a href="https://crates.io/crates/gpu-test">📦 crates.io v0.1.4</a> |
+    <a href="https://github.com/EternalNight996/gpu-test">🐙 GitHub</a> |
     <a href="https://gitee.com/eternalnight996/gpu-test">🌟 Gitee</a>
   </p>
   <p>简体中文 | <a href="README.en.md">English</a></p>
@@ -21,10 +22,11 @@
 ## ✨ Features
 
 - 🚫 **自动拦截不良显卡**：枚举 → 驱动 → 功能自检（利用率 / 功耗 / 温度 / 时钟）→ 稳定性采样，任一异常即 FAIL
+- 🎯 **限定匹配显卡**：`[rule] gpu` 白名单（型号名 / PCI ID），未命中即拦截；未检测到显卡同样拦截
 - 🔁 **首件基准一键同步**：`--info` 输出型号 / 驱动 / 显存 / VBIOS，量产逐台比对，型号不一致即拦截
 - 🌐 **全平台兼容**：Windows 10/11 + Ubuntu 18.04+/银河麒麟 V10/统信 UOS V20（x86_64）
 - 🖥️ **双运行模式**：GUI 人工确认 + `--no-gui` 命令行自动化，均支持接入 e-autotest
-- 📊 **e-log 标准日志**：文件 + stdout 双输出，采集明细（枚举 / 自检 / 采样）逐项落盘 `logs/gpu-test.log`，结尾 `R<{json}>R` 平台契约，退出码 0/非 0 判定
+- 📊 **e-log 标准日志**：会话明细落盘 `logs/gpu-test-gui.log`（枚举 / 自检 / 采样逐项），`--res` 结果覆盖写 `logs/gpu-test.log`，结尾 `R<{json}>R` 平台契约，退出码 0/非 0 判定
 - 🛡️ **不误杀核显机型**：无 NVIDIA 独显时默认 PASS，仅记录，不强制拦截
 
 ## 🔄 工作流程
@@ -67,7 +69,7 @@ gpu-test --info
 真实输出：
 
 ```
-2026-08-12T04:46:42.594026Z  INFO gpu-test: 运行开始: sn= station= mode= samples=3
+2026-08-12T04:46:42.594026Z  INFO gpu-test: 运行开始: samples=3 限定匹配=不限
 2026-08-12T04:46:42.944743Z  INFO gpu-test: 型号标识: GPU 0: NVIDIA GeForce RTX 3060 [10de:2487] 驱动:610.62 显存:12288 MiB VBIOS:94.04.71.00.c2 WMI驱动:32.0.16.1062
 2026-08-12T04:46:42.944766Z  INFO gpu-test: 型号标识: GPU 1: OrayIddDriver Device 驱动:17.50.19.949
 R<{"content":"GPU 0: NVIDIA GeForce RTX 3060 [10de:2487] 驱动:610.62 显存:12288 MiB VBIOS:94.04.71.00.c2 WMI驱动:32.0.16.1062\nGPU 1: OrayIddDriver Device 驱动:17.50.19.949","opts":{"api":"None","args":[],"command":[],"filter":[],"full":false,"init":false,"task":""},"status":true}>R
@@ -76,20 +78,20 @@ R<{"content":"GPU 0: NVIDIA GeForce RTX 3060 [10de:2487] 驱动:610.62 显存:12
 ### 示例 2：自动化功能测试
 
 ```bash
-gpu-test --no-gui --sn TEST001 --station FCT1 --mode AUTO --samples 3
+gpu-test --no-gui --samples 3
 ```
 
 真实输出：
 
 ```
-2026-08-12T04:47:00.339075Z  INFO gpu-test: 运行开始: sn=TEST001 station=FCT1 mode=AUTO samples=3
+2026-08-12T04:47:00.339075Z  INFO gpu-test: 运行开始: samples=3 限定匹配=不限
 2026-08-12T04:47:00.612700Z  INFO gpu-test: 硬件枚举:   NVIDIA GeForce RTX 3060 - 状态:OK 驱动:32.0.16.1062
 2026-08-12T04:47:00.660348Z  INFO gpu-test: 显卡功能:   nvidia-smi: GPU 0: NVIDIA GeForce RTX 3060 (UUID: GPU-94c70323-272d-d7f7-902a-cbf18c996507)
 2026-08-12T04:47:00.723550Z  INFO gpu-test: 功能自检: NVIDIA GeForce RTX 3060, 3 %, 47.57 W, 45, 1777 MHz, 7501 MHz
 2026-08-12T04:47:00.770132Z  INFO gpu-test: 稳定性采样:   采样 1/3 正常
 2026-08-12T04:47:01.328519Z  INFO gpu-test: 稳定性采样:   采样 2/3 正常
 2026-08-12T04:47:01.887764Z  INFO gpu-test: 稳定性采样:   采样 3/3 正常
-2026-08-12T04:47:01.887793Z  INFO gpu-test: status=PASS sn=TEST001 station=FCT1 mode=AUTO samples=3
+2026-08-12T04:47:01.887793Z  INFO gpu-test: status=PASS samples=3 限定匹配=不限
 R<{"content":"检测到显卡设备 2 个:\n  NVIDIA GeForce RTX 3060 - 状态:OK 驱动:32.0.16.1062\n  OrayIddDriver Device - 状态:OK 驱动:17.50.19.949\n检测到 NVIDIA 显卡 1 个，进入驱动与稳定性检查\n  nvidia-smi: GPU 0: NVIDIA GeForce RTX 3060 (UUID: GPU-94c70323-272d-d7f7-902a-cbf18c996507)\n  功能自检: NVIDIA GeForce RTX 3060, 3 %, 47.57 W, 45, 1777 MHz, 7501 MHz\n  采样 1/3 正常\n  采样 2/3 正常\n  采样 3/3 正常\nPASS: 显卡硬件识别正常，驱动已加载，nvidia-smi 采样 3 次全部正常","opts":{"api":"None","args":[],"command":[],"filter":[],"full":false,"init":false,"task":""},"status":true}>R
 ```
 
@@ -115,18 +117,15 @@ GUI 模式：检测过程实时展示（硬件枚举 → 驱动检查 → 功能
 
 | 参数 | 说明 | 默认 |
 |---|---|---|
-| `--sn` | 序列号（平台自动传入，手动可省略，仅写日志） | 空 |
-| `--station` | 工站（平台自动传入，手动可省略，仅写日志） | 空 |
-| `--mode` | 模式（平台自动传入，手动可省略，仅写日志） | 空 |
 | `--samples` | nvidia-smi 稳定性采样次数，越多拦截越严、耗时越长 | 3 |
 | `--info` | 只输出一键同步标识（型号 / 驱动 / 显存 / VBIOS），供平台 filter 比对 | 关 |
 | `--no-gui` | 不弹窗，命令行直接输出（自动化 / 调试） | 关 |
 | `--auto` | GUI 检测完成后倒计时自动关闭 | 关 |
 | `--close SECS` | 自动关闭倒计时秒数 | 5 |
-| `--res PATH` | 额外把 `R<json>R` 写入文件（平台 res_url 方式） | 空 |
+| `--res` | 结果覆盖写入 `logs/gpu-test.log`（etch 风格，仅留最新一条 `R<json>R`） | 关 |
 | `--init-config` | 输出一份 `gpu-test.toml`（默认配置，编辑后同目录生效） | 关 |
 
-> 💡 **配置文件 `gpu-test.toml`**：与程序同目录放置即可自动读取，键名与上表命令行参数一一对应（`sn` / `station` / `mode` / `samples` / `info` / `auto` / `close` / `res` / `no_gui`），提供默认值；**若不存在会自动生成一份默认配置**，命令行参数优先，覆盖配置文件中的同名项。用 `gpu-test --init-config` 可随时重新生成。
+> 💡 **配置文件 `gpu-test.toml`**（参考 etch 命名规范，分段结构）：与程序同目录放置即可自动读取，`[rule] gpu` 限定匹配白名单（型号名 / PCI ID，空 = 不限）、`[run]` 运行参数（`samples` / `info` / `auto` / `close` / `no_gui`）与 CLI 一一对应；**若不存在会自动生成一份默认配置**，命令行参数优先，覆盖配置文件中的同名项。用 `gpu-test --init-config` 可随时重新生成。
 
 ## 🔌 接入 e-autotest
 
@@ -135,7 +134,7 @@ GUI 模式：检测过程实时展示（硬件枚举 → 驱动检查 → 功能
 
    | tag | args | 用途 |
    |---|---|---|
-   | `GPU_TEST` | `--sn --station --mode --samples 3 --no-gui` | 功能检测（自动化跑批） |
+   | `GPU_TEST` | `--samples 3 --no-gui` | 功能检测（自动化跑批） |
    | `GPU_TEST_INFO` | `--info` | 型号标识（首件 / 量产比对） |
 
    fileinfo 要点：`exe_type=WindowsExe/LinuxExe`、`architecture=X86_64`、`is_check=true`（解析 `R<...>R`）、`timeout=30s`
@@ -144,14 +143,14 @@ GUI 模式：检测过程实时展示（硬件枚举 → 驱动检查 → 功能
 5. **验证**：
 
    ```bash
-   gpu-test --no-gui --sn TEST001 --station FCT1 --mode AUTO
+   gpu-test --no-gui
    echo $?    # 0 = 通过，非 0 = FAIL
    ```
 
 ### 输出契约（e-autotest 插件标准）
 
 - 单行 `R<{json}>R`，JSON 为 `{"content": "...", "status": true|false, "opts": {...}}`；`status` 与退出码一致（0=PASS，非 0=FAIL）
-- stdout 同步输出 e-log 详细日志（同样式写入 `logs/gpu-test.log`），末尾收尾 `R<...>R`；UTF-8 编码并强制 flush，平台取最后一个 `R<...>R` 解析
+- stdout 同步输出 e-log 详细日志（同样式写入 `logs/gpu-test-gui.log`），末尾收尾 `R<...>R`；UTF-8 编码并强制 flush，平台取最后一个 `R<...>R` 解析
 
 ## 💡 Why Choose
 
@@ -171,10 +170,18 @@ GUI 模式：检测过程实时展示（硬件枚举 → 驱动检查 → 功能
 
 ## 📝 更新记录
 
-### v0.1.3（最新）
+### v0.1.4（最新）
+- 🆕 **配置改 etch 分段结构**：`gpu-test.toml` 拆为 `[rule]`（限定匹配白名单）+ `[run]`（运行参数）
+- 🎯 **限定匹配显卡拦截**：`[rule] gpu` 白名单（型号名 / PCI ID），未命中即拦截；未检测到显卡同样拦截
+- 🗑️ **移除 `--sn` / `--station` / `--mode`**（平台标准参数不再写入配置与日志）
+- 🔄 **`--res` 改布尔**（etch 风格）：结果覆盖写 `logs/gpu-test.log`，仅留最新一条 `R<json>R`；会话明细落盘 `logs/gpu-test-gui.log`
+- 🎨 **GUI 标题显示版本号**（窗口标题与界面标题均带 `v0.1.4`）
+- 配置不存在时自动生成一份默认配置文件；`gpu-test --init-config` 可随时重新生成
+- `just dist` 打包自动包含 `gpu-test.toml`，开箱即用
+
+### v0.1.3
 - 🆕 **配置文件 `gpu-test.toml`**：键与 CLI 参数一一对应（`sn` / `station` / `mode` / `samples` / `info` / `auto` / `close` / `res` / `no_gui`），同目录放置自动读取，命令行参数优先
 - 配置不存在时自动生成一份默认配置文件；`gpu-test --init-config` 可随时重新生成
-- 采集明细完整落盘 `logs/gpu-test.log`（硬件枚举 / nvidia-smi / 功能自检 / 稳定性采样逐项记录）
 - `just dist` 打包自动包含 `gpu-test.toml`，开箱即用
 
 ### v0.1.2

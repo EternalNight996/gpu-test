@@ -234,6 +234,32 @@ fn lspci_identity(line: &str) -> (String, Option<String>) {
     (name, id)
 }
 
+/// 提取每张显卡的 (型号名, PCI ID) 标识，供限定匹配与 --info 共用
+fn gpu_identities_pair(gpus: &[Gpu]) -> Vec<(String, Option<String>)> {
+    gpus.iter().map(|g| {
+        #[cfg(target_os = "windows")]
+        let (name, id) = (g.name.clone(), pci_id_from_pnp(&g.pnp));
+        #[cfg(target_os = "linux")]
+        let (name, id) = lspci_identity(&g.name);
+        (name, id)
+    }).collect()
+}
+
+/// 显卡限定匹配：白名单非空且无任一显卡（型号名或 PCI ID）命中 -> false（拦截）
+fn rule_gpu_match(gpu_rule: &[String], identities: &[(String, Option<String>)]) -> bool {
+    if gpu_rule.is_empty() {
+        return true; // 未配置限定匹配，不限
+    }
+    identities.iter().any(|(name, id)| {
+        gpu_rule.iter().any(|want| {
+            let want = want.trim().to_lowercase();
+            !want.is_empty()
+                && (name.to_lowercase().contains(&want)
+                    || id.as_deref().map(|i| i.to_lowercase().contains(&want)).unwrap_or(false))
+        })
+    })
+}
+
 /// 型号标识（供平台 filter 比对首件与量产是否一致）。
 /// 纯文本输出、不写日志；返回 (status, content)，content 每行 `GPU N: <型号> [<vendor:device>]`。
 pub fn gpu_identities() -> (bool, String) {
@@ -245,19 +271,17 @@ pub fn gpu_identities() -> (bool, String) {
         return (false, "未检测到任何显卡控制器".to_string());
     }
     let smi_rows = if gpus.iter().any(is_nvidia) { nvidia_smi_details() } else { Vec::new() };
+    let idents = gpu_identities_pair(&gpus);
     let mut nv_idx = 0usize;
-    let lines: Vec<String> = gpus
+    let lines: Vec<String> = idents
         .iter()
         .enumerate()
-        .map(|(i, g)| {
-            #[cfg(target_os = "windows")]
-            let (name, id) = (g.name.clone(), pci_id_from_pnp(&g.pnp));
-            #[cfg(target_os = "linux")]
-            let (name, id) = lspci_identity(&g.name);
+        .map(|(i, (name, id))| {
+            let g = &gpus[i];
             let mut line = format!(
                 "GPU {i}: {}{}",
                 name,
-                id.map(|x| format!(" [{x}]")).unwrap_or_default()
+                id.as_ref().map(|x| format!(" [{x}]")).unwrap_or_default()
             );
             if is_nvidia(g) {
                 if let Some(row) = smi_rows.get(nv_idx) {
@@ -330,8 +354,9 @@ fn driver_bad_names(gpus: &[Gpu]) -> Vec<String> {
 /// 执行显卡识别检测。
 ///
 /// 返回 (status, content)。content 为多行明细，供 e-autotest 界面/日志展示。
+/// `gpu_rule` 为限定匹配白名单（型号名或 PCI ID，空 = 不限；非空且无任一显卡命中 -> 拦截）。
 /// progress_cb 可选：GUI 用它逐项刷新界面。
-pub fn detect(samples: u32, progress_cb: Option<ProgressCb>) -> (bool, String) {
+pub fn detect(samples: u32, gpu_rule: &[String], progress_cb: Option<ProgressCb>) -> (bool, String) {
     let progress = |stage: Stage, ok: Option<bool>, detail: String| {
         if let Some(cb) = &progress_cb {
             cb(stage, ok, detail);
@@ -366,6 +391,21 @@ pub fn detect(samples: u32, progress_cb: Option<ProgressCb>) -> (bool, String) {
         info!(target: "gpu-test", "硬件枚举: {line}");
         lines.push(line);
         progress(Stage::Enum, Some(true), g.name.clone());
+    }
+
+    // 1.1 限定匹配：配置了白名单且无任一显卡命中 -> 拦截（wrong 显卡型号/PCI ID 防呆）
+    if !gpu_rule.is_empty() {
+        let idents = gpu_identities_pair(&gpus);
+        if !rule_gpu_match(gpu_rule, &idents) {
+            let detail = format!("限定匹配未命中（允许: {}）", gpu_rule.join(" / "));
+            error!(target: "gpu-test", "显卡功能: FAIL {detail}");
+            lines.push(format!("FAIL: {detail}"));
+            progress(Stage::Enum, Some(false), detail);
+            return (false, lines.join("\n"));
+        }
+        let hit = format!("限定匹配: 命中（允许: {}）", gpu_rule.join(" / "));
+        info!(target: "gpu-test", "显卡功能: {hit}");
+        lines.push(hit);
     }
 
     // 所有显卡的驱动状态检查（Windows；兼容核显/AMD/虚拟显示，驱动异常即拦截）
@@ -566,5 +606,36 @@ mod tests {
         assert_eq!(rows[0][1], "12288 MiB");
         assert_eq!(rows[0][2], "94.04.71.00.c2");
         assert!(parse_smi_csv("").is_empty());
+    }
+
+    #[test]
+    fn test_rule_gpu_match() {
+        let idents = vec![("NVIDIA GeForce RTX 3060".to_string(), Some("10de:2503".to_string()))];
+        // 空白名单 = 不限
+        assert!(rule_gpu_match(&[], &idents));
+        // 命中型号名
+        assert!(rule_gpu_match(&["RTX 3060".to_string()], &idents));
+        // 命中 PCI ID（大小写不敏感）
+        assert!(rule_gpu_match(&["10DE:2503".to_string()], &idents));
+        // 未命中 -> 拦截
+        assert!(!rule_gpu_match(&["RTX 4090".to_string()], &idents));
+        // 多个白名单任一个命中即可
+        assert!(rule_gpu_match(&["RTX 3090".to_string(), "3060".to_string()], &idents));
+        // 白名单空白项被忽略
+        assert!(!rule_gpu_match(&[" ".to_string(), "RTX 4090".to_string()], &idents));
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn test_gpu_identities_pair_windows() {
+        let gpus = vec![
+            Gpu { name: "NVIDIA GeForce RTX 3060".into(), pnp: r"PCI\VEN_10DE&DEV_2487".into(), ..Default::default() },
+            Gpu { name: "Intel HD".into(), pnp: "ROOT\\DISPLAY".into(), ..Default::default() },
+        ];
+        let idents = gpu_identities_pair(&gpus);
+        assert_eq!(idents.len(), 2);
+        assert_eq!(idents[0].0, "NVIDIA GeForce RTX 3060");
+        assert_eq!(idents[0].1.as_deref(), Some("10de:2487"));
+        assert_eq!(idents[1].1, None);
     }
 }

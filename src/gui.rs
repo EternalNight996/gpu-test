@@ -31,6 +31,7 @@ pub struct GuiOptions {
     pub samples: u32,
     pub auto: bool,
     pub close_secs: u32,
+    pub gpu_rule: Vec<String>,
 }
 
 /// 弹窗运行结果
@@ -149,7 +150,13 @@ impl eframe::App for App {
         egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
         ui.add_space(8.0);
         ui.vertical_centered(|ui| {
-            ui.label(RichText::new("显卡功能性测试").size(20.0).strong());
+            ui.label(RichText::new(format!("显卡功能性测试 v{}", env!("CARGO_PKG_VERSION"))).size(20.0).strong());
+            let rule = if self.opts.gpu_rule.is_empty() {
+                "限定匹配: 不限".to_string()
+            } else {
+                format!("限定匹配: {}", self.opts.gpu_rule.join(" / "))
+            };
+            ui.label(RichText::new(rule).size(13.0).color(Color32::GRAY));
         });
         ui.add_space(8.0);
 
@@ -230,12 +237,13 @@ impl eframe::App for App {
 /// 在后台线程执行检测（不阻塞 GUI）
 fn spawn_detect(opts: &GuiOptions, tx: Sender<Msg>) {
     let samples = opts.samples;
+    let gpu_rule = opts.gpu_rule.clone();
     let tx_done = tx.clone();
     std::thread::spawn(move || {
         let cb: detect::ProgressCb = Box::new(move |stage, ok, detail| {
             let _ = tx.send(Msg::Progress(stage, ok, detail));
         });
-        let (status, content) = detect::detect(samples, Some(cb));
+        let (status, content) = detect::detect(samples, &gpu_rule, Some(cb));
         let _ = tx_done.send(Msg::Done(status, content));
     });
 }
@@ -274,7 +282,7 @@ pub fn run_gui(opts: GuiOptions) -> GuiResult {
         viewport: egui::ViewportBuilder::default()
             .with_inner_size([720.0, 600.0])
             .with_min_inner_size([560.0, 480.0])
-            .with_title("显卡功能性测试")
+            .with_title(format!("显卡功能性测试 v{}", env!("CARGO_PKG_VERSION")))
             .with_resizable(true),
         ..Default::default()
     };
