@@ -351,6 +351,18 @@ fn driver_bad_names(gpus: &[Gpu]) -> Vec<String> {
         .collect()
 }
 
+/// 枚举结果拦截判定：枚举命令失败，或一张显卡都搜不到（结果为空）-> 直接 FAIL，
+/// 返回拦截明细；搜到卡返回 None 放行。
+fn enum_block_reason(code: i32, gpus: &[Gpu]) -> Option<String> {
+    if code != 0 {
+        return Some(format!("枚举显卡失败（rc={code}），无法检测显卡"));
+    }
+    if gpus.is_empty() {
+        return Some("未检测到任何显卡控制器，设备枚举异常或显卡完全不识别".to_string());
+    }
+    None
+}
+
 /// 执行显卡识别检测。
 ///
 /// 返回 (status, content)。content 为多行明细，供 e-autotest 界面/日志展示。
@@ -369,17 +381,12 @@ pub fn detect(samples: u32, gpu_rule: &[String], progress_cb: Option<ProgressCb>
     progress(Stage::Enum, None, "正在枚举显卡设备...".into());
     info!(target: "gpu-test", "硬件枚举: 开始");
     let (code, gpus) = enum_gpus();
-    if code != 0 {
-        let detail = format!("枚举显卡失败（rc={code}），无法检测显卡");
+    if let Some(detail) = enum_block_reason(code, &gpus) {
+        // 搜索不到显卡：直接拦截 FAIL
+        let line = format!("FAIL: {detail}");
         progress(Stage::Enum, Some(false), detail.clone());
         error!(target: "gpu-test", "硬件枚举: FAIL {detail}");
-        return (false, detail);
-    }
-    if gpus.is_empty() {
-        let detail = "未检测到任何显卡控制器，设备枚举异常或显卡完全不识别".to_string();
-        progress(Stage::Enum, Some(false), detail.clone());
-        error!(target: "gpu-test", "硬件枚举: FAIL {detail}");
-        return (false, detail);
+        return (false, line);
     }
 
     lines.push(format!("检测到显卡设备 {} 个:", gpus.len()));
@@ -606,6 +613,20 @@ mod tests {
         assert_eq!(rows[0][1], "12288 MiB");
         assert_eq!(rows[0][2], "94.04.71.00.c2");
         assert!(parse_smi_csv("").is_empty());
+    }
+
+    #[test]
+    fn test_enum_block_reason() {
+        // 枚举命令失败 -> 拦截
+        assert!(enum_block_reason(-1, &[]).is_some());
+        assert!(enum_block_reason(1, &[]).is_some());
+        // 一张卡都搜不到（结果为空）-> 直接拦截 FAIL
+        let r = enum_block_reason(0, &[]);
+        assert!(r.is_some());
+        assert!(r.unwrap().contains("未检测到任何显卡控制器"));
+        // 搜到卡 -> 放行
+        let ok = Gpu { name: "NVIDIA GeForce RTX 3060".into(), ..Default::default() };
+        assert!(enum_block_reason(0, std::slice::from_ref(&ok)).is_none());
     }
 
     #[test]
